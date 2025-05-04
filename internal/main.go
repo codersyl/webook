@@ -29,7 +29,7 @@ func main() {
 		MaxAge: 12 * time.Hour,
 	}))
 
-	u := &web.UserHandler{}
+	u := web.NewUserHandler()
 
 	u.RegisterRoutes(server)
 

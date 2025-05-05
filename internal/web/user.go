@@ -5,19 +5,24 @@ import (
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"webook_Rouge/internal/domain"
+	"webook_Rouge/internal/service"
+)
+
+const (
+	emailRegexPattern    = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+	passwordRegexPattern = `^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,16}$`
 )
 
 type UserHandler struct {
+	svc           *service.UserService
 	emailRegex    *regexp.Regexp
 	passwordRegex *regexp.Regexp
 }
 
-func NewUserHandler() *UserHandler {
-	const (
-		emailRegexPattern    = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
-		passwordRegexPattern = `^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,16}$`
-	)
+func NewUserHandler(svc *service.UserService) *UserHandler {
 	return &UserHandler{
+		svc:           svc,
 		emailRegex:    regexp.MustCompile(emailRegexPattern, regexp.None),
 		passwordRegex: regexp.MustCompile(passwordRegexPattern, regexp.None),
 	}
@@ -75,8 +80,14 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		return
 	}
 
-	// 存储密码
-	fmt.Printf("%v\n", req)
+	// 调用service 存储用户信息
+	err = u.svc.SignUp(ctx, domain.User{
+		Email:    req.Email,
+		Password: req.Password,
+	})
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+	}
 
 	ctx.String(http.StatusOK, "注册成功\n")
 }

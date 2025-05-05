@@ -3,12 +3,33 @@ package main
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	"strings"
 	"time"
+	"webook_Rouge/internal/repository"
+	"webook_Rouge/internal/repository/dao"
+	"webook_Rouge/internal/service"
 	"webook_Rouge/internal/web"
 )
 
 func main() {
+	db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
+	if err != nil {
+		// 只在初始化过程panic
+		panic("failed to connect database")
+	}
+
+	err = dao.InitTable(db)
+	if err != nil {
+		panic(err)
+	}
+
+	ud := dao.NewUserDAO(db)
+	repo := repository.NewUserRepository(ud)
+	svc := service.NewUserService(repo)
+	u := web.NewUserHandler(svc)
+
 	server := gin.Default()
 
 	// 解决跨域问题
@@ -28,8 +49,6 @@ func main() {
 		},
 		MaxAge: 12 * time.Hour,
 	}))
-
-	u := web.NewUserHandler()
 
 	u.RegisterRoutes(server)
 

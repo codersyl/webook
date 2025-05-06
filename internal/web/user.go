@@ -14,6 +14,10 @@ const (
 	passwordRegexPattern = `^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,16}$`
 )
 
+var (
+	ErrUserDuplicatedEmail = service.ErrUserDuplicatedEmail
+)
+
 type UserHandler struct {
 	svc           *service.UserService
 	emailRegex    *regexp.Regexp
@@ -85,15 +89,47 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		Email:    req.Email,
 		Password: req.Password,
 	})
+	if err == ErrUserDuplicatedEmail {
+		ctx.String(http.StatusOK, "邮箱冲突\n")
+		return
+	}
 	if err != nil {
-		ctx.String(http.StatusInternalServerError, "系统错误")
+		ctx.String(http.StatusInternalServerError, "系统错误\n")
+		return
 	}
 
 	ctx.String(http.StatusOK, "注册成功\n")
+	return
 }
 
 func (handler *UserHandler) Login(ctx *gin.Context) {
+	type LogIn struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
 
+	var req LogIn
+
+	// 解析登录请求
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+
+	err := handler.svc.Login(ctx, domain.User{
+		Email:    req.Email,
+		Password: req.Password,
+	})
+
+	if err == service.ErrInvalidUserOrPassword {
+		ctx.String(http.StatusOK, "用户名或密码错误\n")
+		return
+	}
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误\n")
+		return
+	}
+
+	ctx.String(http.StatusOK, "登录成功\n")
 }
 
 func (handler *UserHandler) Edit(ctx *gin.Context) {

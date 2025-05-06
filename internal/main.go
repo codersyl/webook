@@ -14,22 +14,16 @@ import (
 )
 
 func main() {
-	db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
-	if err != nil {
-		// 只在初始化过程panic
-		panic("failed to connect database")
-	}
+	db := initDB()
+	server := InitWebServer()
 
-	err = dao.InitTable(db)
-	if err != nil {
-		panic(err)
-	}
+	u := initUser(db)
+	u.RegisterRoutes(server)
 
-	ud := dao.NewUserDAO(db)
-	repo := repository.NewUserRepository(ud)
-	svc := service.NewUserService(repo)
-	u := web.NewUserHandler(svc)
+	server.Run() // 监听并在 0.0.0.0:8080 上启动服务
+}
 
+func InitWebServer() *gin.Engine {
 	server := gin.Default()
 
 	// 解决跨域问题
@@ -49,8 +43,28 @@ func main() {
 		},
 		MaxAge: 12 * time.Hour,
 	}))
+	return server
+}
 
-	u.RegisterRoutes(server)
+func initUser(db *gorm.DB) *web.UserHandler {
+	ud := dao.NewUserDAO(db)
+	repo := repository.NewUserRepository(ud)
+	svc := service.NewUserService(repo)
+	u := web.NewUserHandler(svc)
+	return u
+}
 
-	server.Run() // 监听并在 0.0.0.0:8080 上启动服务
+func initDB() *gorm.DB {
+	db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
+	if err != nil {
+		// 只在初始化过程panic
+		panic("failed to connect database")
+	}
+
+	err = dao.InitTable(db)
+	if err != nil {
+		panic(err)
+	}
+
+	return db
 }

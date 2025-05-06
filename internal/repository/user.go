@@ -6,6 +6,12 @@ import (
 	"webook_Rouge/internal/repository/dao"
 )
 
+var (
+	ErrUserDuplicatedEmail = dao.ErrUserDuplicatedEmail
+	// ErrUserDuplicatedEmailV1 = fmt.Errorf("邮箱冲突", dao.ErrUserDuplicatedEmail) // 更好的定义
+	ErrUserNotFound = dao.ErrUserNotFound
+)
+
 type UserRepository struct {
 	dao *dao.UserDAO
 }
@@ -20,4 +26,15 @@ func (r *UserRepository) Create(ctx context.Context, u domain.User) error {
 		Email:    u.Email,
 		Password: u.Password,
 	})
+}
+
+func (r *UserRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
+	u, err := r.dao.FindByEmail(ctx, email)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return domain.User{
+		Email:    u.Email,
+		Password: u.Password,
+	}, err
 }

@@ -3,7 +3,9 @@ package main
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
+	// "github.com/gin-contrib/sessions/cookie"
+	// "github.com/gin-contrib/sessions/memstore"
+	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -47,10 +49,19 @@ func InitWebServer() *gin.Engine {
 		MaxAge: 12 * time.Hour,
 	}))
 
-	store := cookie.NewStore([]byte("secret"))
+	//store := cookie.NewStore([]byte("secret")) // 此处存在 cookie中，其实不太安全
+	key1_32 := "iFyeVYqAZPMY2p2Jma6zn22jxbKH6TCI"
+	key2_32 := "x07p2PVBF9eE7zZTXRzkuS26sztgQuCh"
+	//store := memstore.NewStore([]byte(key1_32), []byte(key2_32))
+	store, err := redis.NewStore(16, "tcp", "localhost:6379", "", "", []byte(key1_32), []byte(key2_32))
+	if err != nil {
+		panic(err)
+	}
+
 	server.Use(sessions.Sessions("webook_session", store))
 
-	server.Use(middleware.NewLoginMiddlewareBuilder().Build())
+	login := middleware.NewLoginMiddlewareBuilder().IgnorePaths("/users/login").IgnorePaths("/users/signup")
+	server.Use(login.CheckLogin())
 
 	return server
 }

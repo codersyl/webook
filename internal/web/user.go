@@ -142,5 +142,5 @@ func (handler *UserHandler) Edit(ctx *gin.Context) {
 }
 
 func (handler *UserHandler) Profile(ctx *gin.Context) {
-
+	ctx.String(http.StatusOK, "Profile页面（redis版session\n")
 }

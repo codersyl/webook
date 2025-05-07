@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -11,6 +13,7 @@ import (
 	"webook_Rouge/internal/repository/dao"
 	"webook_Rouge/internal/service"
 	"webook_Rouge/internal/web"
+	"webook_Rouge/internal/web/middleware"
 )
 
 func main() {
@@ -43,6 +46,12 @@ func InitWebServer() *gin.Engine {
 		},
 		MaxAge: 12 * time.Hour,
 	}))
+
+	store := cookie.NewStore([]byte("secret"))
+	server.Use(sessions.Sessions("webook_session", store))
+
+	server.Use(middleware.NewLoginMiddlewareBuilder().Build())
+
 	return server
 }
 

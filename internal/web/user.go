@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	regexp "github.com/dlclark/regexp2"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"webook_Rouge/internal/domain"
@@ -115,7 +116,7 @@ func (handler *UserHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	err := handler.svc.Login(ctx, domain.User{
+	u, err := handler.svc.Login(ctx, domain.User{
 		Email:    req.Email,
 		Password: req.Password,
 	})
@@ -129,6 +130,10 @@ func (handler *UserHandler) Login(ctx *gin.Context) {
 		return
 	}
 
+	// 设置session
+	sess := sessions.Default(ctx)
+	sess.Set("userId", u.ID) //
+	sess.Save()
 	ctx.String(http.StatusOK, "登录成功\n")
 }
 

@@ -132,11 +132,27 @@ func (handler *UserHandler) Login(ctx *gin.Context) {
 
 	// 设置session
 	sess := sessions.Default(ctx)
-	sess.Set("userId", u.ID) //
+	sess.Set("userId", u.ID)
+	sess.Options(sessions.Options{ // Gin用这些配置来初始化Cookie
+		//Secure:   true, // 开发环境建议默认开启 Secure 与 HttpOnly
+		// HttpOnly: true,
+		MaxAge: 30 * 60, // 登录状态 30min会过期
+	})
 	sess.Save()
 	ctx.String(http.StatusOK, "登录成功\n")
 }
 
+func (handler *UserHandler) LogOut(ctx *gin.Context) {
+	sess := sessions.Default(ctx)
+	sess.Options(sessions.Options{ // Gin用这些配置来初始化Cookie
+		//Secure:   true, // 开发环境建议默认开启 Secure 与 HttpOnly
+		// HttpOnly: true,
+		MaxAge: -1, // 删除Cookie
+	})
+	sess.Save()
+	ctx.String(http.StatusOK, "登出成功\n")
+
+}
 func (handler *UserHandler) Edit(ctx *gin.Context) {
 
 }

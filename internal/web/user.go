@@ -5,9 +5,11 @@ import (
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"webook_Rouge/internal/service"
+
+	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"webook_Rouge/internal/domain"
-	"webook_Rouge/internal/service"
 )
 
 const (
@@ -35,8 +37,9 @@ func NewUserHandler(svc *service.UserService) *UserHandler {
 
 func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	server.POST("/users/signup", u.SignUp) // 注册
-	server.POST("/users/login", u.Login)   // 登录
-	server.POST("/users/edit", u.Edit)     // 编辑
+	//server.POST("/users/login", u.Login)   // 登录
+	server.POST("/users/login", u.LoginJWT) // 登录
+	server.POST("/users/edit", u.Edit)      // 编辑
 
 	server.GET("/users/profile", u.Profile) // 查看个人信息
 	return
@@ -142,6 +145,62 @@ func (handler *UserHandler) Login(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "登录成功\n")
 }
 
+func (handler *UserHandler) LoginJWT(ctx *gin.Context) {
+	type LogIn struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	var req LogIn
+
+	// 解析登录请求
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+
+	u, err := handler.svc.Login(ctx, domain.User{
+		Email:    req.Email,
+		Password: req.Password,
+	})
+
+	if err == service.ErrInvalidUserOrPassword {
+		ctx.String(http.StatusOK, "用户名或密码错误\n")
+		return
+	}
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误\n")
+		return
+	}
+
+	// 使用JWT设置登录态
+	// 生成一个JWT token
+	token := jwt.New(jwt.SigningMethodHS512)
+	key32_ForToken := "iFyeVYqAZPMY2p2Jma6zn22jxbKH6TCI" // 随机生成的
+	tokenStr, err := token.SignedString([]byte(key32_ForToken))
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统内部错误\n")
+		return
+	}
+
+	// 控制台输出
+	fmt.Println("token Start")
+	fmt.Printf(tokenStr)
+	fmt.Println("")
+	fmt.Println("token End")
+
+	ctx.Header(("x-jwt-token"), tokenStr)
+
+	sess := sessions.Default(ctx)
+	sess.Set("userId", u.ID)
+	sess.Options(sessions.Options{ // Gin用这些配置来初始化Cookie
+		//Secure:   true, // 开发环境建议默认开启 Secure 与 HttpOnly
+		// HttpOnly: true,
+		MaxAge: 30 * 60, // 登录状态 30min会过期
+	})
+	sess.Save()
+	ctx.String(http.StatusOK, "登录成功\n")
+}
+
 func (handler *UserHandler) LogOut(ctx *gin.Context) {
 	sess := sessions.Default(ctx)
 	sess.Options(sessions.Options{ // Gin用这些配置来初始化Cookie
@@ -151,8 +210,8 @@ func (handler *UserHandler) LogOut(ctx *gin.Context) {
 	})
 	sess.Save()
 	ctx.String(http.StatusOK, "登出成功\n")
-
 }
+
 func (handler *UserHandler) Edit(ctx *gin.Context) {
 
 }

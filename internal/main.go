@@ -35,8 +35,9 @@ func InitWebServer() *gin.Engine {
 	server.Use(cors.New(cors.Config{
 		AllowOrigins: []string{"http://localhost:3000"}, //
 		// AllowMethods: []string{"POST", "GET"}, // 不写的话默认的几个简单方法都ok
-		AllowHeaders: []string{"Content-Type", "Authorization"},
-		// ExposeHeaders:    []string{"Content-Length"},
+		AllowHeaders: []string{"Content-Type", "Authorization"}, // 允许你过来的请求带的东西
+		// ExposeHeaders 是我发给前端的东西中，允许前端读取的东西
+		ExposeHeaders:    []string{"x-jwt-token"}, // 不加这个，前端拿不到token
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
 			// 开发环境判断
@@ -60,7 +61,8 @@ func InitWebServer() *gin.Engine {
 
 	server.Use(sessions.Sessions("webook_session", store))
 
-	login := middleware.NewLoginMiddlewareBuilder().IgnorePaths("/users/login").IgnorePaths("/users/signup")
+	// login := middleware.NewLoginMiddlewareBuilder().IgnorePaths("/users/login").IgnorePaths("/users/signup")
+	login := middleware.NewLoginJWTMiddlewareBuilder().IgnorePaths("/users/login").IgnorePaths("/users/signup")
 	server.Use(login.CheckLogin())
 
 	return server

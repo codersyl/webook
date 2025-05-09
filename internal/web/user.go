@@ -181,7 +181,8 @@ func (handler *UserHandler) LoginJWT(ctx *gin.Context) {
 			// NotBefore: jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)), // 2天过期
 		},
-		Uid: u.ID,
+		Uid:       u.ID,
+		UserAgent: ctx.Request.UserAgent(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	key32_ForToken := "iFyeVYqAZPMY2p2Jma6zn22jxbKH6TCI" // 随机生成的
@@ -192,10 +193,7 @@ func (handler *UserHandler) LoginJWT(ctx *gin.Context) {
 	}
 
 	// 控制台输出
-	fmt.Println("token Start")
-	fmt.Printf(tokenStr)
-	fmt.Println("")
-	fmt.Println("token End")
+	//	fmt.Println("新登录用户一位，token：  ", tokenStr, " ENDtoken")
 
 	ctx.Header(("x-jwt-token"), tokenStr)
 
@@ -250,5 +248,6 @@ func (handler *UserHandler) Profile(ctx *gin.Context) {
 type UserClaims struct {
 	jwt.RegisteredClaims // 实现了Claims的接口，直接组合这个类型，可免去自己实现Claims接口的麻烦
 	// 另外加上自己需要的字段，但不要放pwd、用户个人隐私数据之类的敏感数据
-	Uid int64
+	Uid       int64
+	UserAgent string
 }

@@ -1,11 +1,9 @@
 package middleware
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
-	"strings"
 	"webook_Rouge/internal/web"
 )
 
@@ -34,22 +32,15 @@ func (l *LoginJWTMiddlewareBuilder) CheckLogin() gin.HandlerFunc {
 
 		// 使用JWT来登录校验
 
-		//tokenHeader := ctx.Request.Header.Get("Authorization")
 		tokenHeader := ctx.GetHeader("Authorization")
-		fmt.Println(tokenHeader)
 		if tokenHeader == "" {
 			// 没登录
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		segs := strings.Split(tokenHeader, " ")
-		if len(segs) != 2 {
-			// 分段长度非法，有人乱传 "Authorization"
-			ctx.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
 
-		tokenStr := segs[1]
+		tokenStr := tokenHeader
+		// fmt.Println("鉴权用户一位，token：  ", tokenStr, " ENDtoken")
 		claims := &web.UserClaims{}                          // 指针，因为Parse的时候会放数据进来
 		key32_ForToken := "iFyeVYqAZPMY2p2Jma6zn22jxbKH6TCI" // 应该与当时加密的key一致
 		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
@@ -66,6 +57,14 @@ func (l *LoginJWTMiddlewareBuilder) CheckLogin() gin.HandlerFunc {
 
 		if token == nil || !token.Valid {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		if claims.UserAgent != ctx.Request.UserAgent() {
+			// 存在安全问题，需要监控，并将该用户登出
+			// 此处直接失败
+			// ctx.AbortWithStatus(http.StatusUnauthorized)
+			ctx.String(http.StatusUnauthorized, "你小子换设备了，重新登录\n")
 			return
 		}
 

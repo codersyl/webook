@@ -1,4 +1,7 @@
 .DS_Store
 articles/
-# /*/main.go
+practice/
 # webook-fe/
+test.db
+
+# /*/main.go

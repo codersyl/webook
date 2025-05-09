@@ -5,6 +5,7 @@ import (
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"time"
 	"webook_Rouge/internal/service"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -41,7 +42,7 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	server.POST("/users/login", u.LoginJWT) // 登录
 	server.POST("/users/edit", u.Edit)      // 编辑
 
-	server.GET("/users/profile", u.Profile) // 查看个人信息
+	server.GET("/users/profile", u.ProfileJWT) // 查看个人信息
 	return
 
 }
@@ -174,7 +175,15 @@ func (handler *UserHandler) LoginJWT(ctx *gin.Context) {
 
 	// 使用JWT设置登录态
 	// 生成一个JWT token
-	token := jwt.New(jwt.SigningMethodHS512)
+
+	claims := UserClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			// NotBefore: jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)), // 2天过期
+		},
+		Uid: u.ID,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	key32_ForToken := "iFyeVYqAZPMY2p2Jma6zn22jxbKH6TCI" // 随机生成的
 	tokenStr, err := token.SignedString([]byte(key32_ForToken))
 	if err != nil {
@@ -216,6 +225,30 @@ func (handler *UserHandler) Edit(ctx *gin.Context) {
 
 }
 
+func (handler *UserHandler) ProfileJWT(ctx *gin.Context) {
+	c, ok := ctx.Get("claims")
+	//if !ok { // 按理来说一条逻辑写下来必然是有uid的，如果为了保险，也需要判断一下
+	//	ctx.AbortWithStatus(http.StatusInternalServerError)
+	//	return
+	//}
+	claims, ok := c.(*UserClaims) // 类型断言
+	if !ok {
+		// 断言失败
+		// 有这个判断就不需要上一个判断了
+		// if ctx.Get("Uid") false, uidRaw will be nil, nil cast into int64 will fail
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(">> Uid : ", claims.Uid)
+	ctx.String(http.StatusOK, "Profile页面（迫真\n")
+}
+
 func (handler *UserHandler) Profile(ctx *gin.Context) {
-	ctx.String(http.StatusOK, "Profile页面（redis版session\n")
+	ctx.String(http.StatusOK, "Profile页面（迫真\n")
+}
+
+type UserClaims struct {
+	jwt.RegisteredClaims // 实现了Claims的接口，直接组合这个类型，可免去自己实现Claims接口的麻烦
+	// 另外加上自己需要的字段，但不要放pwd、用户个人隐私数据之类的敏感数据
+	Uid int64
 }

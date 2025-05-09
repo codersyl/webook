@@ -6,6 +6,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"strings"
+	"webook_Rouge/internal/web"
 )
 
 // JWT 登录校验
@@ -49,8 +50,9 @@ func (l *LoginJWTMiddlewareBuilder) CheckLogin() gin.HandlerFunc {
 		}
 
 		tokenStr := segs[1]
+		claims := &web.UserClaims{}                          // 指针，因为Parse的时候会放数据进来
 		key32_ForToken := "iFyeVYqAZPMY2p2Jma6zn22jxbKH6TCI" // 应该与当时加密的key一致
-		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
 			return []byte(key32_ForToken), nil
 		})
 
@@ -66,6 +68,7 @@ func (l *LoginJWTMiddlewareBuilder) CheckLogin() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		fmt.Println(">> 解析到 token: ", token)
+
+		ctx.Set("claims", claims) // 可以只加Uid，但是后续可能存储更多数据，所以存个总的
 	}
 }

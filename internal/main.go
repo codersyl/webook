@@ -65,6 +65,8 @@ func InitWebServer() *gin.Engine {
 	login := middleware.NewLoginJWTMiddlewareBuilder().IgnorePaths("/users/login").IgnorePaths("/users/signup")
 	server.Use(login.CheckLogin())
 
+	// 输出日志带颜色
+	gin.ForceConsoleColor()
 	return server
 }
 

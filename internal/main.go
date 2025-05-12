@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
-	// "github.com/gin-contrib/sessions/cookie"
-	// "github.com/gin-contrib/sessions/memstore"
+	// "github.com/gin-contrib/sessions/cookie" // 基于cookie实现的session
+	// "github.com/gin-contrib/sessions/memstore" // 基于memstore内存存储实现的session
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
@@ -19,11 +19,19 @@ import (
 )
 
 func main() {
-	db := initDB()
-	server := InitWebServer()
+	//db := initDB()
+	//server := InitWebServer()
+	//
+	//u := initUser(db)
+	//u.RegisterRoutes(server)
 
-	u := initUser(db)
-	u.RegisterRoutes(server)
+	// 生成镜像测试k8s，先解除对MySQL和Redis的依赖，只做基本的测试
+	server := gin.Default()
+	server.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
 
 	server.Run() // 监听并在 0.0.0.0:8080 上启动服务
 }

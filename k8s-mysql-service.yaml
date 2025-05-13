@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+    name: webook-mysql
+spec:
+    selector:
+        app: webook-mysql
+    ports:
+        -   protocol: TCP
+            port: 11309 # 外部使用
+            targetPort: 3306 # 内部app负责接收的
+    type: LoadBalancer
+  

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: webook-mysql
+    labels:
+        app: webook-mysql
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: webook-mysql
+    template:
+        metadata:
+            name: webook-mysql
+            labels:
+                app: webook-mysql # 要跟上面的 matchLabels 中的保持一致，还要跟对应 service 的yaml文件中保持一致
+        spec:
+            containers:
+                - name: webook-mysql
+                  image: mysql:8.0.36
+                  env:
+                      - name: MYSQL_ROOT_PASSWORD
+                        value: root
+                  imagePullPolicy: IfNotPresent
+                  volumeMounts: # 持久化存储的配置
+                      - mountPath: /mysql
+                        name: mysql-storage # 我用的是 POD 里面的哪个持久化，需要跟下面的某一个对上
+                  ports:
+                      - containerPort: 3306
+                        protocol: TCP
+            restartPolicy: Always
+            volumes: # 持久化配置
+                -   name: mysql-storage
+                    persistentVolumeClaim:
+                        claimName: webook-mysql-claim
+      

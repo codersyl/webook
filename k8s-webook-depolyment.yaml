@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: webook
+# 规格说明
+spec:
+    # 副本数量
+    replicas: 3
+    # 筛选器
+    selector:
+        matchLabels:
+            app: webook
+    # template 描述的是 POD 是什么样的
+    template:
+        metadata:
+            name: webook
+            labels:
+                app: webook # 要与上面 selector 中的那个对的上
+#       POD 的具体信息
+        spec:
+            containers:
+                -   name: webook
+                    image: rougesyl/webook:v0.0.1
+                    ports:
+                      -   containerPort: 8080 # 对应运行程序的具体端口，暴露端口让外部能够访问

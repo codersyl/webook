@@ -7,7 +7,8 @@ spec:
         app: webook-mysql
     ports:
         -   protocol: TCP
-            port: 11309 # 外部使用
+            port: 11309 # k8s 内部访问端口
             targetPort: 3306 # 内部app负责接收的
-    type: LoadBalancer
+            nodePort: 30002 # 外部访问端口
+    type: NodePort
   

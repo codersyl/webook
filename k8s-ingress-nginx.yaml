@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: webook-ingress
+#    annotations:
+#        nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+    ingressClassName: nginx # 要使用 nginx
+    rules:
+        # 当 host 是 rouge.webook.com 的时候 命中这一条
+        - host: rouge.webook.com # 因为并不实际拥有此域名，所以需要在系统的 hosts 文件中把这个域名 映射到 127.0.0.1 本地域名上
+          http:
+                paths:
+                    -   path: / # 如果请求路径是 / 的时候，将流量转发给 webook 服务上，端口是 80
+                        pathType: Prefix
+                        backend:
+                            service:
+                                name: webook # 要与后端在 k8s 中的名字一致
+                                port:
+                                    number: 80 # 需要与 后端部署的 端口一致

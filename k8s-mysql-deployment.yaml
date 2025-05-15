@@ -22,8 +22,8 @@ spec:
                       - name: MYSQL_ROOT_PASSWORD
                         value: root
                   imagePullPolicy: IfNotPresent
-                  volumeMounts: # 持久化存储的配置
-                      - mountPath: /mysql
+                  volumeMounts:
+                      - mountPath: /var/lib/mysql # 对应到 MySQL 数据存储的位置
                         name: mysql-storage # 我用的是 POD 里面的哪个持久化，需要跟下面的某一个对上
                   ports:
                       - containerPort: 3306

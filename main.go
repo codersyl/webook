@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	// "github.com/gin-contrib/sessions/cookie" // 基于cookie实现的session
@@ -19,19 +20,19 @@ import (
 )
 
 func main() {
-	//db := initDB()
-	//server := InitWebServer()
-	//
-	//u := initUser(db)
-	//u.RegisterRoutes(server)
+	db := initDB()
+	server := InitWebServer()
+
+	u := initUser(db)
+	u.RegisterRoutes(server)
 
 	// 生成镜像测试k8s，先解除对MySQL和Redis的依赖，只做基本的测试
-	server := gin.Default()
-	server.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
+	//server := gin.Default()
+	//server.GET("/ping", func(c *gin.Context) {
+	//	c.JSON(200, gin.H{
+	//		"message": "pong",
+	//	})
+	//})
 
 	server.Run() // 监听并在 0.0.0.0:8080 上启动服务
 }
@@ -41,7 +42,7 @@ func InitWebServer() *gin.Engine {
 
 	// 解决跨域问题
 	server.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"http://localhost:3000"}, //
+		// AllowOrigins: []string{"http://localhost:3000"}, //
 		// AllowMethods: []string{"POST", "GET"}, // 不写的话默认的几个简单方法都ok
 		AllowHeaders: []string{"Content-Type", "Authorization"}, // 允许你过来的请求带的东西
 		// ExposeHeaders 是我发给前端的东西中，允许前端读取的东西
@@ -62,7 +63,7 @@ func InitWebServer() *gin.Engine {
 	key1_32 := "iFyeVYqAZPMY2p2Jma6zn22jxbKH6TCI"
 	key2_32 := "x07p2PVBF9eE7zZTXRzkuS26sztgQuCh"
 	//store := memstore.NewStore([]byte(key1_32), []byte(key2_32))
-	store, err := redis.NewStore(16, "tcp", "localhost:6379", "", "", []byte(key1_32), []byte(key2_32))
+	store, err := redis.NewStore(16, "tcp", "webook-redis:6379", "", "", []byte(key1_32), []byte(key2_32))
 	if err != nil {
 		panic(err)
 	}
@@ -87,9 +88,10 @@ func initUser(db *gorm.DB) *web.UserHandler {
 }
 
 func initDB() *gorm.DB {
-	db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
+	db, err := gorm.Open(mysql.Open("root:root@tcp(webook-mysql:11309)/webook"))
 	if err != nil {
 		// 只在初始化过程panic
+		fmt.Println(err)
 		panic("failed to connect database")
 	}
 

@@ -11,4 +11,3 @@ spec:
             port: 80 # 把 80 端口映射到 8080 端口
             targetPort: 8080 # 转发到 pod 上的啥端口
     type: LoadBalancer # 当作一个负载均衡
-  

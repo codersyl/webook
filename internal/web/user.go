@@ -39,12 +39,10 @@ func NewUserHandler(svc *service.UserService) *UserHandler {
 func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	server.POST("/users/signup", u.SignUp) // 注册
 	//server.POST("/users/login", u.Login)   // 登录
-	server.POST("/users/login", u.LoginJWT) // 登录
-	server.POST("/users/edit", u.Edit)      // 编辑
-
+	server.POST("/users/login", u.LoginJWT)    // 登录
+	server.POST("/users/edit", u.Edit)         // 编辑
 	server.GET("/users/profile", u.ProfileJWT) // 查看个人信息
 	return
-
 }
 
 func (u *UserHandler) SignUp(ctx *gin.Context) {
@@ -179,7 +177,7 @@ func (handler *UserHandler) LoginJWT(ctx *gin.Context) {
 	claims := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			// NotBefore: jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)), // 2天过期
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)), // 半小时过期
 		},
 		Uid:       u.ID,
 		UserAgent: ctx.Request.UserAgent(),
@@ -188,6 +186,7 @@ func (handler *UserHandler) LoginJWT(ctx *gin.Context) {
 	key32_ForToken := "iFyeVYqAZPMY2p2Jma6zn22jxbKH6TCI" // 随机生成的
 	tokenStr, err := token.SignedString([]byte(key32_ForToken))
 	if err != nil {
+
 		ctx.String(http.StatusInternalServerError, "系统内部错误\n")
 		return
 	}
